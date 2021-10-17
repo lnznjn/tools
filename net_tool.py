@@ -15,6 +15,8 @@ upload  = False
 target  = ""
 port    = 0
 
+#--------------------------------------------------------------------------------------------------------------------------------------------
+
 def get_help():
     print("Usage: netcat.py -t [host] -p [port]")
     print("-l --listen              - listen on [host]:[port] for incoming connections")
@@ -25,35 +27,18 @@ def get_help():
 
 #--------------------------------------------------------------------------------------------------------------------------------------------
 
-def client_send(data):
+def client_send():
     client = socket.socket()
 
     try:
         client.connect((target, port))
 
-        if len(data):
-            client.send(data)
-
         while True:
-            
-            recv_len = 1
-            response = ""
-
-            while True:
-                
-                ret = client.recv(2048)
-                recv_len = len(ret)
-                response += ret
-
-                if recv_len < 2048:
-                    break
-
-            print(response)
-
-            data = input("")
-            data += "\n"
-
+            data = input("SHELL> ")
             client.send(data)
+            ret = client.recv(2048)
+            response = ret
+            print(response)     
 
     except:
         
@@ -139,10 +124,9 @@ def client_handle(client_socket, addr):
         client_socket.send(output)
 
     if command:
-        
-        cmd_buffer = ""
+        print("[*] give shell to {}".format(addr))
 
-        while not "\n" in cmd_buffer:
+        while True:
 
             cmd_buffer = client_socket.recv(1024)
 
@@ -164,49 +148,48 @@ def main():
         
         get_help()
 
-    else:
-        try:
+
+    try:
         
-            opts, args = getopt.getopt(sys.argv[1:],
-                    "hlecut:p:",
-                    ["help", "listen", "command", "upload", "execute", "target=", "port="])
+        opts, args = getopt.getopt(sys.argv[1:],
+                "hlecut:p:",
+                ["help", "listen", "command", "upload", "execute", "target=", "port="])
 
-        except getopt.GetoptError as err:
+    except getopt.GetoptError as err:
         
-            print("[-] ", err)
+        print("[-] ", err)
 
-        for o, a in opts:
-            if o in "-h" or "--help":
-                get_help()
+    for o, a in opts:
+        if o in ("-h", "--help"):
+            get_help()
 
-            elif o in "-l" or "--listen":
-                listen = True
+        elif o in ("-l", "--listen"):
+            listen = True
 
-            elif o in "-c" or "--command":
-                command = True
+        elif o in ("-c", "--command"):
+            command = True
 
-            elif o in "-e" or "--execute":
-                execute = True
+        elif o in ("-e", "--execute"):
+            execute = True
 
-            elif o in "-u" or "--upload":
-                upload = True
+        elif o in ("-u", "--upload"):
+            upload = True
 
-            elif o in "-t" or "--target":
-                target = a
+        elif o in ("-t", "--target"):
+            target = a
 
-            elif o in "-p" or "--port":
-                port = int(a)
+        elif o in ("-p", "--port"):
+            port = int(a)
 
-            else:
-                print("[-] unhandled Option")
+        else:
+            print("[-] unhandled Option")
 
     if not listen and len(target) and port > 0:
-        
-        data = sys.stdin.read()
-        client_handle(data)
+
+        client_send()
 
     elif listen:
-        
+        print("[*] start listening...")
         server_loop()
 
 main()
