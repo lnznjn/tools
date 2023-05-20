@@ -7,6 +7,8 @@ import sys
 import os
 import threading
 import getopt
+import readline
+import atexit
 
 listen  = False
 command = False
@@ -14,6 +16,9 @@ execute = False
 upload  = False
 target  = ""
 port    = 0
+
+history_file = os.path.expanduser('~/.history')
+history_length = 100
 
 #--------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -27,6 +32,18 @@ def get_help():
 
 #--------------------------------------------------------------------------------------------------------------------------------------------
 
+def init():
+    readline.parse_and_bind('set enable-keypad on')
+    readline.parse_and_bind('tab: complete')
+    if not os.path.exists(history_file):
+        with open(history_file, 'a+') as history:
+            history.close()
+            
+    readline.read_history_file(history_file)
+    readline.set_history_length(history_length)
+    
+    atexit.register(readline.write_history_file, history_file)
+
 def client_send():
     client = socket.socket()
 
@@ -34,7 +51,7 @@ def client_send():
         client.connect((target, port))
 
         while True:
-            data = input("SHELL> ")
+            data = input("SHELL>>> ")
             client.send(data)
             ret = client.recv(2048)
             response = ret
@@ -143,7 +160,9 @@ def main():
     global upload
     global target
     global port
-
+    
+    init()
+    
     if not sys.argv[1:]:
         
         get_help()
